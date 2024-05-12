@@ -31,8 +31,8 @@ def append_files_to_project(directory: str = '.', excluded_files: set = None):
     try:
         with open(output_file_path, 'w', encoding='utf-8') as outfile:
             for root, dirs, files in os.walk(directory):
-                # Skip directories named '.env' or '.venv'
-                dirs[:] = [d for d in dirs if d not in {'.env', '.venv'}]
+                # Skip directories named '.env', '.venv', or 'venv'
+                dirs[:] = [d for d in dirs if d not in {'.env', '.venv', 'venv'}]
                 skipped_dirs.extend([os.path.join(root, d) for d in set(dirs) - set(os.listdir(root))])
 
                 for file in files:
