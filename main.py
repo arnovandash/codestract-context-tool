@@ -2,27 +2,24 @@ import os
 import logging
 from datetime import datetime
 import chardet
+import sys
 
 def get_encoding(file_path):
     with open(file_path, 'rb') as file:
         return chardet.detect(file.read())['encoding']
 
-def is_image_file(file_name: str) -> bool:
-    # Checks if a file is an image file based on its extension.
-    image_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'}
+def is_excluded_ext(file_name: str) -> bool:
+    # Checks if a file has an extension that should be excluded from processing.
+    file_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg', '.pyc'}
     _, extension = os.path.splitext(file_name)
-    return extension.lower() in image_extensions
+    return extension.lower() in file_extensions
 
 def append_files_to_project(directory: str = '.', excluded_files: set = None):
     output_dir = '.codestract'
     os.makedirs(output_dir, exist_ok=True)
 
-    '''
     if excluded_files is None:
-        excluded_files = {'main.py'}
-    else:
-        excluded_files.update({'main.py'})
-    '''
+        excluded_files = set()
 
     total_chars = 0
     file_count = 0
@@ -38,12 +35,13 @@ def append_files_to_project(directory: str = '.', excluded_files: set = None):
     try:
         with open(output_file_path, 'w', encoding='utf-8') as outfile:
             for root, dirs, files in os.walk(directory):
-                # Skip directories named '.git', '.env', '.venv', or 'venv'
-                dirs[:] = [d for d in dirs if d not in {'.env', '.venv', 'venv', 'git'}]
+
+                # Filter out specific directories to skip
+                dirs[:] = [d for d in dirs if d not in {'.git', '.env', '.venv', 'venv'}]
                 skipped_dirs.extend([os.path.join(root, d) for d in set(dirs) - set(os.listdir(root))])
 
                 for file in files:
-                    if file not in excluded_files and not is_image_file(file):
+                    if file not in excluded_files and not is_excluded_ext(file):
                         file_path = os.path.join(root, file)
                         try:
                             with open(file_path, 'r', encoding=get_encoding(file_path)) as infile:
@@ -112,12 +110,21 @@ def setup_logging(log_file_name='logfile.log'):
     logger.addHandler(stream_handler)
     logger.addHandler(file_handler)
 
+
 def main():
     setup_logging()
-    if append_files_to_project():
+    # Get the directory path from the command line arguments
+    if len(sys.argv) > 1:
+        directory_path = sys.argv[1]
+    else:
+        print("Usage: python main.py <directory_path>")
+        sys.exit(1)
+
+    if append_files_to_project(directory=directory_path):
         logging.info("Code base exported successfully.")
     else:
         logging.error("Failed to export code base.")
+
 
 if __name__ == "__main__":
     main()
