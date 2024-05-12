@@ -12,7 +12,7 @@ Codestract is a powerful command-line tool designed to extract and consolidate t
 ## Features
 
 - **Recursive Directory Traversal**: Codestract can traverse through all subdirectories within a specified directory, ensuring that no file is left behind.
-- **File Exclusion**: Automatically excludes certain files like `main.py` and output files from processing, allowing you to customize the exclusion list.
+- **File Exclusion**: Automatically excludes output files from processing and allows you to customize the exclusion list to suit your needs.
 - **Image File Filtering**: Filters out files with image extensions such as `.jpg`, `.png`, etc., to focus solely on text-based files.
 - **Timestamp-based Output Files**: Each time the script is run, a new output file with a timestamp is generated and saved in the `context-out` folder, ensuring that your context files are organized and easy to reference.
 - **Project Structure Summary**: Codestract generates a summary of the project structure, including directories and files, and inserts it at the top of each exported context file.

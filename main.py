@@ -1,6 +1,11 @@
 import os
 import logging
 from datetime import datetime
+import chardet
+
+def get_encoding(file_path):
+    with open(file_path, 'rb') as file:
+        return chardet.detect(file.read())['encoding']
 
 def is_image_file(file_name: str) -> bool:
     # Checks if a file is an image file based on its extension.
@@ -12,10 +17,12 @@ def append_files_to_project(directory: str = '.', excluded_files: set = None):
     output_dir = '.codestract'
     os.makedirs(output_dir, exist_ok=True)
 
+    '''
     if excluded_files is None:
         excluded_files = {'main.py'}
     else:
         excluded_files.update({'main.py'})
+    '''
 
     total_chars = 0
     file_count = 0
@@ -31,21 +38,26 @@ def append_files_to_project(directory: str = '.', excluded_files: set = None):
     try:
         with open(output_file_path, 'w', encoding='utf-8') as outfile:
             for root, dirs, files in os.walk(directory):
-                # Skip directories named '.env', '.venv', or 'venv'
-                dirs[:] = [d for d in dirs if d not in {'.env', '.venv', 'venv'}]
+                # Skip directories named '.git', '.env', '.venv', or 'venv'
+                dirs[:] = [d for d in dirs if d not in {'.env', '.venv', 'venv', 'git'}]
                 skipped_dirs.extend([os.path.join(root, d) for d in set(dirs) - set(os.listdir(root))])
 
                 for file in files:
                     if file not in excluded_files and not is_image_file(file):
                         file_path = os.path.join(root, file)
-                        with open(file_path, 'r', encoding='utf-8') as infile:
-                            contents = infile.read()
-                            outfile.write(f'# File: {file_path}\n\n')
-                            outfile.write(contents)
-                            outfile.write("\n\n")
-                            total_chars += len(contents)
-                            file_count += 1
-                            total_file_size += os.path.getsize(file_path)
+                        try:
+                            with open(file_path, 'r', encoding=get_encoding(file_path)) as infile:
+
+                                contents = infile.read()
+                                outfile.write(f'# File: {file_path}\n\n')
+                                outfile.write(contents)
+                                outfile.write("\n\n")
+                                total_chars += len(contents)
+                                file_count += 1
+                                total_file_size += os.path.getsize(file_path)
+                        except UnicodeDecodeError:
+                            logging.error(f"Skipping file {file_path} due to encoding issues")
+                            continue
                     else:
                         skipped_files.append(os.path.join(root, file))
 
