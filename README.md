@@ -41,6 +41,23 @@ python3 main.py <directory_path>
 ```
 Ensure to replace `<directory_path>` with the path of the directory you want to process.
 
+
+## Ignoring Files and Directories
+
+Create a `.ignore` file in the `.codestract` directory to specify files and directories to exclude. List the names of files to be ignored on separate lines. To exclude an entire directory, postfix its name with a `/`.
+
+Example `.ignore` file:
+
+```bash
+# Exclude files
+secrets.txt
+config.json
+
+# Exclude directories
+logs/
+tests/
+```
+
 ## Roadmap
 
 Future improvements include:
