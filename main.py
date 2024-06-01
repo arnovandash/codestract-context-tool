@@ -14,12 +14,36 @@ def is_excluded_ext(file_name: str) -> bool:
     _, extension = os.path.splitext(file_name)
     return extension.lower() in file_extensions
 
-def append_files_to_project(directory: str = '.', excluded_files: set = None):
+def load_ignore_list(directory: str) -> set:
+    ignore_file_path = os.path.join(directory, '.codestract', '.ignore')
+    if os.path.exists(ignore_file_path):
+        with open(ignore_file_path, 'r', encoding='utf-8') as file:
+            return {line.strip() for line in file if line.strip()}
+    return set()
+
+def load_ignore_list(directory: str):
+    ignore_file_path = os.path.join(directory, '.codestract', '.ignore')
+    excluded_files = set()
+    excluded_dirs = set()
+    if os.path.exists(ignore_file_path):
+        with open(ignore_file_path, 'r', encoding='utf-8') as file:
+            for line in file:
+                line = line.strip()
+                if line.endswith('/'):
+                    excluded_dirs.add(line[:-1])
+                else:
+                    excluded_files.add(line)
+    return excluded_files, excluded_dirs
+
+
+def append_files_to_project(directory: str = '.', excluded_files: set = None, excluded_dirs: set = None):
+
     output_dir = '.codestract'
     os.makedirs(output_dir, exist_ok=True)
 
-    if excluded_files is None:
-        excluded_files = set()
+
+    if excluded_files is None or excluded_dirs is None:
+        excluded_files, excluded_dirs = load_ignore_list(directory)
 
     total_chars = 0
     file_count = 0
@@ -37,7 +61,7 @@ def append_files_to_project(directory: str = '.', excluded_files: set = None):
             for root, dirs, files in os.walk(directory):
 
                 # Filter out specific directories to skip
-                dirs[:] = [d for d in dirs if d not in {'.git', '.env', '.venv', 'venv', '.idea', '.codestract', '__pycache__'}]
+                dirs[:] = [d for d in dirs if d not in {'.git', '.env', '.venv', 'venv', '.idea', '.codestract', '__pycache__'} and d not in excluded_dirs]
                 skipped_dirs.extend([os.path.join(root, d) for d in set(dirs) - set(os.listdir(root))])
 
                 for file in files:
@@ -120,7 +144,8 @@ def main():
         print("Usage: python main.py <directory_path>")
         sys.exit(1)
 
-    if append_files_to_project(directory=directory_path):
+    excluded_files, excluded_dirs = load_ignore_list(directory_path)
+    if append_files_to_project(directory=directory_path, excluded_files=excluded_files, excluded_dirs=excluded_dirs):
         logging.info("Code base exported successfully.")
     else:
         logging.error("Failed to export code base.")
